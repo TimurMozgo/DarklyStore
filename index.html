@@ -145,7 +145,7 @@
                         <path d="M9 18 L15 12 L9 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                     </svg>
                 </button>
-                <button class="profile-btn" data-section="admin">
+                <button class="profile-btn admin-only" data-section="admin" style="display: none;">
                     <svg class="btn-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
                         <path d="M12 1 L12 4 M12 20 L12 23 M1 12 L4 12 M20 12 L23 12 M4.22 4.22 L6.34 6.34 M17.66 17.66 L19.78 19.78 M4.22 19.78 L6.34 17.66 M17.66 6.34 L19.78 4.22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -240,7 +240,7 @@
                     <input type="hidden" id="edit-product-id">
                     <div class="form-group">
                         <label data-i18n="productImage">Изображение товара</label>
-                        <input type="file" id="form-product-image" accept="image/*">
+                        <input type="file" id="form-product-image" accept="image/*" multiple>
                         <div id="form-image-preview" class="image-preview"></div>
                     </div>
                     <div class="form-group">

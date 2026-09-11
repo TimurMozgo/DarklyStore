@@ -2,12 +2,17 @@
 // 1. ИНИЦИАЛИЗАЦИЯ И ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
 // ==========================================
 let tg = null;
+let currentUser = null;
+const ADMIN_IDS = [6088315974, 8361950436];
+
 try {
     if (window.Telegram && window.Telegram.WebApp) {
         tg = window.Telegram.WebApp;
         tg.ready();
         tg.expand();
+        currentUser = tg.initDataUnsafe?.user;
         console.log('✅ Telegram Web App инициализирован');
+        console.log('Пользователь:', currentUser);
     } else {
         console.log('⚠️ Режим обычного браузера');
     }
@@ -42,7 +47,7 @@ function safeLoad(key, fallback) {
 let cart = safeLoad('cart', []);
 let favorites = safeLoad('favorites', []);
 let orders = safeLoad('orders', []);
-let products = safeLoad('products', null);
+let products = safeLoad('products', []);
 
 // ==========================================
 // 2. ДАННЫЕ И ПЕРЕВОДЫ
@@ -64,12 +69,12 @@ const translations = {
         name: 'Ваше имя', phone: 'Номер телефона', confirmOrder: 'Подтвердить заказ',
         invalidPhone: 'Неверный формат. Должно быть +380XXXXXXXXX',
         addProduct: 'Добавить товар', addNewProduct: '+ Добавить новый товар', editProduct: 'Редактировать товар',
-        saveProduct: 'Сохранить', productImage: 'Изображение товара', productName: 'Название товара',
+        saveProduct: 'Сохранить', productImage: 'Изображение товара (можно несколько)', productName: 'Название товара',
         productPrice: 'Цена (грн)', productDescription: 'Описание (необязательно)', productCategory: 'Категория',
         selectCategory: 'Выберите категорию', enterName: 'Введите название', enterDescription: 'Описание товара',
         orderNumber: 'Заказ №', remove: 'Удалить', edit: 'Редактировать', delete: 'Удалить',
         deleteConfirm: 'Вы уверены, что хотите удалить этот товар?', productDeleted: 'Товар удален',
-        productSaved: 'Товар успешно сохранен!', fillAllFields: 'Заполните все обязательные поля!', selectImage: 'Выберите изображение!'
+        productSaved: 'Товар успешно сохранен!', fillAllFields: 'Заполните все обязательные поля!', selectImage: 'Выберите хотя бы одно изображение!'
     },
     uk: {
         welcome: 'Ласкаво просимо!', welcomeText: 'Найкращий одяг для вашого стилю', categories: 'Категорії',
@@ -82,25 +87,16 @@ const translations = {
         name: 'Ваше ім\'я', phone: 'Номер телефону', confirmOrder: 'Підтвердити замовлення',
         invalidPhone: 'Невірний формат. Має бути +380XXXXXXXXX',
         addProduct: 'Додати товар', addNewProduct: '+ Додати новий товар', editProduct: 'Редагувати товар',
-        saveProduct: 'Зберегти', productImage: 'Зображення товару', productName: 'Назва товару',
+        saveProduct: 'Зберегти', productImage: 'Зображення товару (можна декілька)', productName: 'Назва товару',
         productPrice: 'Ціна (грн)', productDescription: 'Опис (необов\'язково)', productCategory: 'Категорія',
         selectCategory: 'Оберіть категорію', enterName: 'Введіть назву', enterDescription: 'Опис товару',
         orderNumber: 'Замовлення №', remove: 'Видалити', edit: 'Редагувати', delete: 'Видалити',
         deleteConfirm: 'Ви впевнені, що хочете видалити цей товар?', productDeleted: 'Товар видалено',
-        productSaved: 'Товар успішно збережено!', fillAllFields: 'Заповніть всі обов\'язкові поля!', selectImage: 'Оберіть зображення!'
+        productSaved: 'Товар успішно збережено!', fillAllFields: 'Заповніть всі обов\'язкові поля!', selectImage: 'Оберіть хоча б одне зображення!'
     }
 };
 
 function t(key) { return translations[currentLang][key] || key; }
-
-// Товары-заглушки убраны — начинаем с чистого листа
-function getDefaultProducts() {
-    return [];
-}
-
-if (!products || !Array.isArray(products)) {
-    products = getDefaultProducts();
-}
 
 // ==========================================
 // 3. УТИЛИТЫ И СОХРАНЕНИЕ
@@ -124,7 +120,7 @@ function applyTheme(theme) {
 }
 
 function generateOrderNumber() {
-    return Math.floor(100000 + Math.random() * 900000); // 6-значное число
+    return Math.floor(100000 + Math.random() * 900000);
 }
 
 function saveData() {
@@ -133,7 +129,11 @@ function saveData() {
         localStorage.setItem('favorites', JSON.stringify(favorites));
         localStorage.setItem('orders', JSON.stringify(orders));
         localStorage.setItem('products', JSON.stringify(products));
-    } catch (e) { console.error('Ошибка сохранения:', e); }
+        console.log('✅ Данные сохранены');
+    } catch (e) { 
+        console.error('Ошибка сохранения:', e); 
+        alert('Ошибка сохранения данных. Возможно, localStorage переполнен.');
+    }
 }
 
 function getCategoryName(category) {
@@ -158,7 +158,7 @@ function switchPage(page) {
     if (page === 'cart') renderCart();
     if (page === 'orders') renderOrders();
     if (page === 'favorites') renderFavorites();
-    if (page === 'admin') renderAdminPanel(); // Рендер админки
+    if (page === 'admin') renderAdminPanel();
     
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -168,6 +168,11 @@ function renderProducts() {
     if (!container) return;
     
     const filtered = currentCategory === 'all' ? products : products.filter(p => p.category === currentCategory);
+    
+    if (filtered.length === 0) {
+        container.innerHTML = '<p style="text-align: center; padding: 40px; color: var(--gray-dark);">Товаров пока нет</p>';
+        return;
+    }
     
     container.innerHTML = filtered.map(product => `
         <div class="product-card" data-id="${product.id}">
@@ -338,7 +343,7 @@ function renderFavorites() {
 }
 
 // ==========================================
-// 5. АДМИН ПАНЕЛЬ (ПОЛНЫЙ КОНТРОЛЬ)
+// 5. АДМИН ПАНЕЛЬ (МНОЖЕСТВЕННЫЕ ФОТО)
 // ==========================================
 function renderAdminPanel() {
     const list = document.getElementById('admin-products-list');
@@ -364,7 +369,7 @@ function renderAdminPanel() {
                 </div>
             </div>
             <div class="admin-product-actions">
-                <button class="admin-btn admin-btn-edit" onclick="editProduct(${product.id})">✏️ ${t('edit')}</button>
+                <button class="admin-btn admin-btn-edit" onclick="editProduct(${product.id})">️ ${t('edit')}</button>
                 <button class="admin-btn admin-btn-delete" onclick="deleteProduct(${product.id})">🗑️ ${t('delete')}</button>
             </div>
         </div>
@@ -390,7 +395,7 @@ function editProduct(productId) {
     document.getElementById('form-product-description').value = product.description || '';
     document.getElementById('form-product-category').value = product.category;
     const preview = document.getElementById('form-image-preview');
-    preview.innerHTML = `<img src="${product.image}" alt="Preview">`;
+    preview.innerHTML = product.images.map(img => `<img src="${img}" alt="Preview" style="max-width: 100px; margin: 5px;">`).join('');
     preview.classList.add('active');
     openModal('product-form-modal');
 }
@@ -404,7 +409,7 @@ function deleteProduct(productId) {
     alert(t('productDeleted'));
 }
 
-// Обработка формы добавления/редактирования
+// Обработка формы с МНОЖЕСТВЕННЫМИ фото
 document.getElementById('product-form').addEventListener('submit', (e) => {
     e.preventDefault();
     const productId = document.getElementById('edit-product-id').value;
@@ -412,19 +417,35 @@ document.getElementById('product-form').addEventListener('submit', (e) => {
     const price = parseInt(document.getElementById('form-product-price').value);
     const description = document.getElementById('form-product-description').value.trim();
     const category = document.getElementById('form-product-category').value;
-    const imageFile = document.getElementById('form-product-image').files[0];
+    const imageFiles = document.getElementById('form-product-image').files;
 
     if (!name || !price || !category) { alert(t('fillAllFields')); return; }
 
-    const saveProduct = (imageData) => {
+    const saveProduct = (imagesData) => {
         if (productId) {
             const index = products.findIndex(p => p.id == productId);
             if (index !== -1) {
-                products[index] = { ...products[index], name, price, description, category, image: imageData || products[index].image, images: imageData ? [imageData] : products[index].images };
+                products[index] = { 
+                    ...products[index], 
+                    name, 
+                    price, 
+                    description, 
+                    category, 
+                    image: imagesData[0] || products[index].image,
+                    images: imagesData.length > 0 ? imagesData : products[index].images 
+                };
             }
         } else {
-            if (!imageData) { alert(t('selectImage')); return; }
-            products.push({ id: Date.now(), name, price, description, category, image: imageData, images: [imageData] });
+            if (imagesData.length === 0) { alert(t('selectImage')); return; }
+            products.push({ 
+                id: Date.now(), 
+                name, 
+                price, 
+                description, 
+                category, 
+                image: imagesData[0], 
+                images: imagesData 
+            });
         }
         saveData();
         closeModal('product-form-modal');
@@ -433,28 +454,53 @@ document.getElementById('product-form').addEventListener('submit', (e) => {
         alert(t('productSaved'));
     };
 
-    if (imageFile) {
-        const reader = new FileReader();
-        reader.onload = (event) => saveProduct(event.target.result);
-        reader.readAsDataURL(imageFile);
+    if (imageFiles.length > 0) {
+        const readers = [];
+        const imagesData = [];
+        let loaded = 0;
+        
+        Array.from(imageFiles).forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                imagesData[index] = event.target.result;
+                loaded++;
+                if (loaded === imageFiles.length) {
+                    saveProduct(imagesData);
+                }
+            };
+            reader.readAsDataURL(file);
+        });
     } else if (productId) {
         const product = products.find(p => p.id == productId);
-        saveProduct(product?.image);
+        saveProduct(product?.images || []);
     } else {
         alert(t('selectImage'));
     }
 });
 
+// Превью для МНОЖЕСТВЕННЫХ изображений
 document.getElementById('form-product-image').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const preview = document.getElementById('form-image-preview');
-            preview.innerHTML = `<img src="${event.target.result}" alt="Preview">`;
-            preview.classList.add('active');
-        };
-        reader.readAsDataURL(file);
+    const files = e.target.files;
+    if (files.length > 0) {
+        const preview = document.getElementById('form-image-preview');
+        preview.innerHTML = '';
+        let loaded = 0;
+        
+        Array.from(files).forEach((file) => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = document.createElement('img');
+                img.src = event.target.result;
+                img.style.maxWidth = '100px';
+                img.style.margin = '5px';
+                preview.appendChild(img);
+                loaded++;
+                if (loaded === files.length) {
+                    preview.classList.add('active');
+                }
+            };
+            reader.readAsDataURL(file);
+        });
     }
 });
 
@@ -499,7 +545,7 @@ function openModal(modalId) { const m = document.getElementById(modalId); if (m)
 function closeModal(modalId) { const m = document.getElementById(modalId); if (m) m.classList.remove('active'); }
 
 // ==========================================
-// 7. ИНИЦИАЛИЗАЦИЯ СОБЫТИЙ (DOMContentLoaded)
+// 7. ИНИЦИАЛИЗАЦИЯ СОБЫТИЙ
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     applyTheme(currentTheme);
@@ -507,11 +553,25 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector(`.lang-btn[data-lang="${currentLang}"]`)?.classList.add('active');
     updateTranslations();
 
-    try {
-        const user = tg?.initDataUnsafe?.user;
-        document.getElementById('user-nickname').textContent = user?.first_name || 'Гость';
-    } catch (e) { document.getElementById('user-nickname').textContent = 'Гость'; }
-    
+    // Установка аватарки и имени пользователя
+    if (currentUser) {
+        document.getElementById('user-nickname').textContent = currentUser.first_name || 'Пользователь';
+        if (currentUser.photo_url) {
+            const avatarContainer = document.querySelector('.avatar-container');
+            avatarContainer.innerHTML = `<img src="${currentUser.photo_url}" alt="Avatar" class="user-avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+        }
+    } else {
+        document.getElementById('user-nickname').textContent = 'Гость';
+    }
+
+    // Показ кнопки админ панели только для админов
+    if (currentUser && ADMIN_IDS.includes(currentUser.id)) {
+        document.querySelectorAll('.admin-only').forEach(btn => {
+            btn.style.display = 'flex';
+        });
+        console.log('✅ Админ панель доступна для пользователя:', currentUser.id);
+    }
+
     updateCartBadge();
 
     // Переключатель темы
@@ -588,4 +648,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Профиль и назад
     document.querySelectorAll('.profile-btn').forEach(btn => btn.addEventListener('click', () => switchPage(btn.dataset.section)));
     document.querySelectorAll('.back-btn').forEach(btn => btn.addEventListener('click', () => switchPage(btn.dataset.back)));
+    
+    console.log('✅ Приложение инициализировано');
+    console.log('📦 Товаров:', products.length);
 });

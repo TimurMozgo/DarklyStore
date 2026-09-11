@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Магазин одежды</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Шапка с логотипом и переключателем языка -->
+    <header class="app-header">
+        <div class="logo-container">
+            <img src="./img/darkly_store_logo.png" class="logo" alt="Logo">
+        </div>
+        <div class="header-controls">
+            <button class="theme-toggle" id="theme-toggle" title="Сменить тему">
+                <svg class="theme-icon-light" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="2"/>
+                    <path d="M12 2 L12 5 M12 19 L12 22 M2 12 L5 12 M19 12 L22 12 M4.93 4.93 L7.05 7.05 M16.95 16.95 L19.07 19.07 M4.93 19.07 L7.05 16.95 M16.95 7.05 L19.07 4.93" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <svg class="theme-icon-dark" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21 12.79 A9 9 0 1 1 11.21 3 A7 7 0 0 0 21 12.79 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <div class="lang-switcher">
+                <button class="lang-btn active" data-lang="ru">RU</button>
+                <button class="lang-btn" data-lang="uk">UA</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Основной контейнер -->
+    <main class="main-container">
+        <!-- Главная страница -->
+        <section id="home-page" class="page active">
+            <div class="welcome-section">
+                <h1 class="welcome-title" data-i18n="welcome">Добро пожаловать!</h1>
+                <p class="welcome-text" data-i18n="welcomeText">Лучшая одежда для вашего стиля</p>
+            </div>
+            <div class="categories-preview">
+                <h2 class="section-title" data-i18n="categories">Категории</h2>
+                <div class="categories-grid">
+                    <div class="category-card" data-category="jackets">
+                        <svg class="category-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M30 20 L50 15 L70 20 L75 40 L70 45 L70 80 L30 80 L30 45 L25 40 Z" fill="none" stroke="currentColor" stroke-width="3"/>
+                            <line x1="50" y1="15" x2="50" y2="80" stroke="currentColor" stroke-width="2"/>
+                            <circle cx="50" cy="30" r="3" fill="currentColor"/>
+                            <circle cx="50" cy="45" r="3" fill="currentColor"/>
+                            <circle cx="50" cy="60" r="3" fill="currentColor"/>
+                        </svg>
+                        <span data-i18n="jackets">Куртки/Жилетки</span>
+                    </div>
+                    <div class="category-card" data-category="tshirts">
+                        <svg class="category-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M35 25 L50 20 L65 25 L75 35 L65 40 L65 75 L35 75 L35 40 L25 35 Z" fill="none" stroke="currentColor" stroke-width="3"/>
+                            <path d="M40 25 Q50 30 60 25" fill="none" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        <span data-i18n="tshirts">Футболки</span>
+                    </div>
+                    <div class="category-card" data-category="shorts">
+                        <svg class="category-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M30 25 L70 25 L70 45 L60 45 L55 75 L45 75 L40 45 L30 45 Z" fill="none" stroke="currentColor" stroke-width="3"/>
+                            <line x1="50" y1="25" x2="50" y2="45" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        <span data-i18n="shorts">Шорты</span>
+                    </div>
+                    <div class="category-card" data-category="accessories">
+                        <svg class="category-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="25" y="30" width="50" height="50" rx="5" fill="none" stroke="currentColor" stroke-width="3"/>
+                            <path d="M35 30 L35 20 Q35 15 40 15 L60 15 Q65 15 65 20 L65 30" fill="none" stroke="currentColor" stroke-width="3"/>
+                            <circle cx="50" cy="55" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        <span data-i18n="accessories">Аксессуары</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Каталог -->
+        <section id="catalog-page" class="page">
+            <div class="catalog-header">
+                <h2 class="section-title" data-i18n="catalog">Каталог</h2>
+                <div class="category-filters">
+                    <button class="filter-btn active" data-filter="all" data-i18n="all">Все</button>
+                    <button class="filter-btn" data-filter="jackets" data-i18n="jackets">Куртки/Жилетки</button>
+                    <button class="filter-btn" data-filter="tshirts" data-i18n="tshirts">Футболки</button>
+                    <button class="filter-btn" data-filter="shorts" data-i18n="shorts">Шорты</button>
+                    <button class="filter-btn" data-filter="accessories" data-i18n="accessories">Аксессуары</button>
+                </div>
+            </div>
+            <div id="products-container" class="products-grid"></div>
+        </section>
+
+        <!-- Корзина -->
+        <section id="cart-page" class="page">
+            <h2 class="section-title" data-i18n="cart">Корзина</h2>
+            <div id="cart-items" class="cart-items"></div>
+            <div id="cart-empty" class="empty-state">
+                <svg class="empty-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 30 L30 30 L35 70 L75 70 L80 40 L35 40" fill="none" stroke="currentColor" stroke-width="3"/>
+                    <circle cx="40" cy="80" r="5" fill="currentColor"/>
+                    <circle cx="70" cy="80" r="5" fill="currentColor"/>
+                </svg>
+                <p data-i18n="cartEmpty">Корзина пуста</p>
+            </div>
+            <div id="cart-footer" class="cart-footer">
+                <div class="cart-total">
+                    <span data-i18n="total">Итого:</span>
+                    <span id="cart-total-price">0 грн</span>
+                </div>
+                <button id="checkout-btn" class="btn-primary" data-i18n="checkout">Оформить заказ</button>
+            </div>
+        </section>
+
+        <!-- Профиль -->
+        <section id="profile-page" class="page">
+            <div class="profile-header">
+                <div class="avatar-container">
+                    <svg id="user-avatar" class="user-avatar" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="50" cy="50" r="50" fill="var(--gray-light)"/>
+                        <circle cx="50" cy="40" r="15" fill="currentColor"/>
+                        <path d="M25 80 Q25 60 50 60 Q75 60 75 80" fill="currentColor"/>
+                    </svg>
+                </div>
+                <h3 id="user-nickname" class="user-nickname">Пользователь</h3>
+            </div>
+            <div class="profile-menu">
+                <button class="profile-btn" data-section="orders">
+                    <svg class="btn-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="3" y="7" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+                        <path d="M8 7 L8 5 Q8 3 10 3 L14 3 Q16 3 16 5 L16 7" fill="none" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    <span data-i18n="myOrders">Мои заказы</span>
+                    <svg class="btn-arrow" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 18 L15 12 L9 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <button class="profile-btn" data-section="favorites">
+                    <svg class="btn-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 21 L10.55 19.7 Q5 15 5 10 Q5 6 8 6 Q10 6 12 8 Q14 6 16 6 Q19 6 19 10 Q19 15 13.45 19.7 Z" fill="#FF0000" stroke="currentColor" stroke-width="1"/>
+                    </svg>
+                    <span data-i18n="favorites">Избранное</span>
+                    <svg class="btn-arrow" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 18 L15 12 L9 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <button class="profile-btn" data-section="admin">
+                    <svg class="btn-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
+                        <path d="M12 1 L12 4 M12 20 L12 23 M1 12 L4 12 M20 12 L23 12 M4.22 4.22 L6.34 6.34 M17.66 17.66 L19.78 19.78 M4.22 19.78 L6.34 17.66 M17.66 6.34 L19.78 4.22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <span data-i18n="adminPanel">Админ панель</span>
+                    <svg class="btn-arrow" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 18 L15 12 L9 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+        </section>
+
+        <!-- Мои заказы -->
+        <section id="orders-page" class="page">
+            <div class="page-header">
+                <button class="back-btn" data-back="profile">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 18 L9 12 L15 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <h2 class="section-title" data-i18n="myOrders">Мои заказы</h2>
+            </div>
+            <div id="orders-list" class="orders-list"></div>
+            <div id="orders-empty" class="empty-state">
+                <svg class="empty-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="20" y="25" width="60" height="50" rx="5" fill="none" stroke="currentColor" stroke-width="3"/>
+                    <line x1="20" y1="40" x2="80" y2="40" stroke="currentColor" stroke-width="2"/>
+                    <circle cx="35" cy="32" r="3" fill="currentColor"/>
+                    <circle cx="50" cy="32" r="3" fill="currentColor"/>
+                    <circle cx="65" cy="32" r="3" fill="currentColor"/>
+                </svg>
+                <p data-i18n="noOrders">У вас пока нет заказов</p>
+            </div>
+        </section>
+
+        <!-- Избранное -->
+        <section id="favorites-page" class="page">
+            <div class="page-header">
+                <button class="back-btn" data-back="profile">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 18 L9 12 L15 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <h2 class="section-title" data-i18n="favorites">Избранное</h2>
+            </div>
+            <div id="favorites-list" class="products-grid"></div>
+            <div id="favorites-empty" class="empty-state">
+                <svg class="empty-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 80 L45 75 Q20 55 20 35 Q20 20 35 20 Q45 20 50 30 Q55 20 65 20 Q80 20 80 35 Q80 55 55 75 Z" fill="none" stroke="currentColor" stroke-width="3"/>
+                </svg>
+                <p data-i18n="noFavorites">В избранном пока пусто</p>
+            </div>
+        </section>
+
+        <!-- Админ панель -->
+
+        <section id="admin-page" class="page">
+            <div class="page-header">
+                <button class="back-btn" data-back="profile">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 18 L9 12 L15 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <h2 class="section-title" data-i18n="adminPanel">Админ панель</h2>
+            </div>
+            
+            <div class="admin-stats">
+                <p class="products-count" id="products-count">Всего товаров: 0</p>
+            </div>
+            
+            <div id="admin-products-list" class="admin-products-list"></div>
+            
+            <div id="admin-empty" class="admin-empty">
+                <p data-i18n="noProducts">Товаров пока нет</p>
+            </div>
+            
+            <button class="btn-primary" onclick="openAddProductModal()" data-i18n="addNewProduct">
+                + Добавить новый товар
+            </button>
+        </section>
+
+        <!-- Модалка добавления/редактирования товара -->
+        <div id="product-form-modal" class="modal">
+            <div class="modal-content edit-modal-content">
+                <button class="modal-close">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M18 6 L6 18 M6 6 L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <h3 class="modal-title" id="form-modal-title" data-i18n="addProduct">Добавить товар</h3>
+                <form id="product-form" class="admin-form">
+                    <input type="hidden" id="edit-product-id">
+                    <div class="form-group">
+                        <label data-i18n="productImage">Изображение товара</label>
+                        <input type="file" id="form-product-image" accept="image/*">
+                        <div id="form-image-preview" class="image-preview"></div>
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="productName">Название товара</label>
+                        <input type="text" id="form-product-name" data-i18n-placeholder="enterName" placeholder="Введите название" required>
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="productPrice">Цена (грн)</label>
+                        <input type="number" id="form-product-price" placeholder="0" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="productDescription">Описание (необязательно)</label>
+                        <textarea id="form-product-description" data-i18n-placeholder="enterDescription" placeholder="Описание товара" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="productCategory">Категория</label>
+                        <select id="form-product-category" required>
+                            <option value="" data-i18n="selectCategory">Выберите категорию</option>
+                            <option value="jackets" data-i18n="jackets">Куртки/Жилетки</option>
+                            <option value="tshirts" data-i18n="tshirts">Футболки</option>
+                            <option value="shorts" data-i18n="shorts">Шорты</option>
+                            <option value="accessories" data-i18n="accessories">Аксессуары</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary" id="form-submit-btn" data-i18n="saveProduct">Сохранить</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Нижнее навигационное меню -->
+    <nav class="bottom-nav">
+        <button class="nav-btn active" data-page="home">
+            <svg class="nav-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 12 L12 3 L21 12 L19 12 L19 21 L15 21 L15 15 L9 15 L9 21 L5 21 L5 12 Z" fill="none" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <span class="nav-text" data-i18n="home">Главная</span>
+        </button>
+        <button class="nav-btn" data-page="catalog">
+            <svg class="nav-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="3" width="7" height="7" fill="none" stroke="currentColor" stroke-width="2"/>
+                <rect x="14" y="3" width="7" height="7" fill="none" stroke="currentColor" stroke-width="2"/>
+                <rect x="3" y="14" width="7" height="7" fill="none" stroke="currentColor" stroke-width="2"/>
+                <rect x="14" y="14" width="7" height="7" fill="none" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <span class="nav-text" data-i18n="catalog">Каталог</span>
+        </button>
+        <button class="nav-btn" data-page="cart">
+            <svg class="nav-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7 4 L9 4 L10 16 L19 16 L21 8 L10 8" fill="none" stroke="currentColor" stroke-width="2"/>
+                <circle cx="11" cy="20" r="1.5" fill="currentColor"/>
+                <circle cx="18" cy="20" r="1.5" fill="currentColor"/>
+            </svg>
+            <span class="nav-text" data-i18n="cart">Корзина</span>
+            <span id="cart-badge" class="cart-badge hidden">0</span>
+        </button>
+        <button class="nav-btn" data-page="profile">
+            <svg class="nav-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/>
+                <path d="M6 21 Q6 15 12 15 Q18 15 18 21" fill="none" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <span class="nav-text" data-i18n="profile">Профиль</span>
+        </button>
+    </nav>
+
+    <!-- Модалка товара -->
+    <div id="product-modal" class="modal">
+        <div class="modal-content product-modal-content">
+            <button class="modal-close">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6 L6 18 M6 6 L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </button>
+            <div class="product-modal-images">
+                <div id="modal-images-container" class="images-slider"></div>
+            </div>
+            <div class="product-modal-info">
+                <h3 id="modal-product-name" class="modal-product-name"></h3>
+                <p id="modal-product-price" class="modal-product-price"></p>
+                <p id="modal-product-description" class="modal-product-description"></p>
+                <button id="modal-add-to-cart" class="btn-primary" data-i18n="addToCart">Добавить в корзину</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модалка оформления заказа -->
+    <div id="checkout-modal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6 L6 18 M6 6 L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </button>
+            <h3 class="modal-title" data-i18n="checkoutTitle">Оформление заказа</h3>
+            <form id="checkout-form" class="checkout-form">
+                <div class="form-group">
+                    <label data-i18n="name">Ваше имя</label>
+                    <input type="text" id="customer-name" data-i18n-placeholder="enterName" placeholder="Введите имя" required>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="phone">Номер телефона</label>
+                    <input type="tel" id="customer-phone" value="+380" required>
+                    <span id="phone-error" class="error-text hidden" data-i18n="invalidPhone">Неверный формат номера</span>
+                </div>
+                <button type="submit" class="btn-primary" data-i18n="confirmOrder">Подтвердить заказ</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модалка успеха -->
+    <div id="success-modal" class="modal">
+        <div class="modal-content success-modal-content">
+            <svg class="success-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="45" fill="#00C853"/>
+                <path d="M30 50 L45 65 L70 35" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <h3 class="modal-title" data-i18n="orderSuccess">Заказ оформлен!</h3>
+            <p class="success-text" data-i18n="orderSuccessText">Мы свяжемся с вами в ближайшее время</p>
+            <p class="order-number-display" id="order-number-display"></p>
+            <button id="success-close-btn" class="btn-primary" data-i18n="backToCatalog">Вернуться в каталог</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -178,6 +178,12 @@ function applyTranslations() {
 // НАВИГАЦИЯ
 // ==========================================
 function switchPage(page) {
+    // 🔒 ЗАЩИТА: Если пытаются открыть админку без прав, перекидываем на главную
+    if (page === 'admin' && !isAdmin()) {
+        console.warn('⛔ Попытка несанкционированного доступа к админке!');
+        page = 'home'; 
+    }
+
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     
@@ -460,6 +466,50 @@ function renderFavorites() {
 // ==========================================
 // АДМИН ПАНЕЛЬ
 // ==========================================
+
+// ==========================================
+// АДМИН-ПАНЕЛЬ: ПРОВЕРКА ДОСТУПА ПО ID
+// ==========================================
+const ADMIN_IDS = [6088315974, 8361950436]; // Разрешённые ID админов
+
+function isAdmin() {
+    // Если открыто в обычном браузере (без Telegram) — показываем для удобной разработки
+    if (!tg) {
+        console.log('🔓 Запуск вне Telegram — админка доступна для тестов');
+        return true;
+    }
+    
+    // Если открыто в Telegram — проверяем ID
+    const userId = tg?.initDataUnsafe?.user?.id;
+    console.log('👤 ID пользователя:', userId);
+    
+    if (userId && ADMIN_IDS.includes(Number(userId))) {
+        console.log('✅ Это админ! Доступ разрешён');
+        return true;
+    }
+    
+    console.log('❌ Это не админ. Доступ запрещён');
+    return false;
+}
+
+function updateAdminVisibility() {
+    const adminBtn = document.getElementById('adminBtn'); // Убедись, что в HTML есть id="adminBtn"
+    const adminPage = document.getElementById('admin-page');
+    const adminOnlyElements = document.querySelectorAll('.admin-only');
+    
+    if (isAdmin()) {
+        // Показываем элементы админки
+        if (adminBtn) adminBtn.style.display = 'flex';
+        if (adminPage) adminPage.style.display = 'block';
+        adminOnlyElements.forEach(el => { el.style.display = 'flex'; });
+    } else {
+        // Скрываем элементы админки
+        if (adminBtn) adminBtn.style.display = 'none';
+        if (adminPage) adminPage.style.display = 'none';
+        adminOnlyElements.forEach(el => { el.style.display = 'none'; });
+    }
+}
+
 function renderAdminPanel() {
     const list = document.getElementById('admin-products-list');
     const empty = document.getElementById('admin-empty');
@@ -1025,8 +1075,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if(nicknameEl) nicknameEl.textContent = 'Гость';
     }
 
-    // Админ панель (временно всем для тестов)
-    document.querySelectorAll('.admin-only').forEach(btn => { btn.style.display = 'flex'; });
+    // 🔒 ПРОВЕРКА ПРАВ ДОСТУПА К АДМИН-ПАНЕЛИ (ЗАМЕНА СТАРОЙ СТРОКИ)
+    updateAdminVisibility();
 
     updateCartBadge();
     renderProducts();

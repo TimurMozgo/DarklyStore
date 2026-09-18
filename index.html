@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Магазин одежды</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- ВАЖНО: Подключение библиотеки Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -30,7 +32,6 @@
         </div>
     </header>
 
-    <!-- Основной контейнер -->
     <main class="main-container">
         <!-- Главная страница -->
         <section id="home-page" class="page active">
@@ -201,7 +202,6 @@
         </section>
 
         <!-- Админ панель -->
-
         <section id="admin-page" class="page">
             <div class="page-header">
                 <button class="back-btn" data-back="profile">
@@ -211,20 +211,14 @@
                 </button>
                 <h2 class="section-title" data-i18n="adminPanel">Админ панель</h2>
             </div>
-            
             <div class="admin-stats">
                 <p class="products-count" id="products-count">Всего товаров: 0</p>
             </div>
-            
             <div id="admin-products-list" class="admin-products-list"></div>
-            
             <div id="admin-empty" class="admin-empty">
                 <p data-i18n="noProducts">Товаров пока нет</p>
             </div>
-            
-            <button class="btn-primary" onclick="openAddProductModal()" data-i18n="addNewProduct">
-                + Добавить новый товар
-            </button>
+            <button class="btn-primary" onclick="openAddProductModal()" data-i18n="addNewProduct">+ Добавить новый товар</button>
         </section>
 
         <!-- Модалка добавления/редактирования товара -->

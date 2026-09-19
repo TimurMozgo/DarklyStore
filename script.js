@@ -493,19 +493,25 @@ function isAdmin() {
 }
 
 function updateAdminVisibility() {
-    const adminBtn = document.getElementById('adminBtn'); // Убедись, что в HTML есть id="adminBtn"
+    const adminBtn = document.getElementById('adminBtn');
     const adminPage = document.getElementById('admin-page');
     const adminOnlyElements = document.querySelectorAll('.admin-only');
     
     if (isAdmin()) {
-        // Показываем элементы админки
+        // Разрешаем доступ: показываем кнопку и элементы
         if (adminBtn) adminBtn.style.display = 'flex';
-        if (adminPage) adminPage.style.display = 'block';
+        
+        // ВАЖНО: очищаем inline-стиль, чтобы страница подчинялась CSS-классу .active
+        if (adminPage) adminPage.style.display = ''; 
+        
         adminOnlyElements.forEach(el => { el.style.display = 'flex'; });
     } else {
-        // Скрываем элементы админки
+        // Запрещаем доступ: всё скрываем
         if (adminBtn) adminBtn.style.display = 'none';
-        if (adminPage) adminPage.style.display = 'none';
+        if (adminPage) {
+            adminPage.style.display = 'none';
+            adminPage.classList.remove('active'); // На всякий случай убираем класс active
+        }
         adminOnlyElements.forEach(el => { el.style.display = 'none'; });
     }
 }

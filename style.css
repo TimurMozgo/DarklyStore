@@ -1275,3 +1275,32 @@ body.dark .btn-primary:hover {
         padding: 20px;
     }
 }
+
+/* ==========================================
+   ФУТЕР С КОПИРАЙТОМ (TINELAB)
+   ========================================== */
+.app-footer {
+    position: fixed;
+    bottom: 75px; /* Располагаем прямо над нижней навигацией */
+    left: 0;
+    right: 0;
+    text-align: center;
+    padding: 8px 0;
+    font-size: 12px;
+    color: var(--text-secondary, #888); /* Приглушенный цвет текста */
+    z-index: 90; /* Ниже, чем у навигации (чтобы не перекрывать её) */
+    pointer-events: none; /* Важно: чтобы футер не мешал кликать по элементам под ним */
+    background: linear-gradient(to top, var(--bg-primary, #121212) 20%, transparent 100%); /* Легкое затухание фона для читаемости */
+}
+
+.app-footer p {
+    margin: 0;
+    line-height: 1.4;
+}
+
+.app-footer strong {
+    color: var(--accent-color, #4CAF50); /* Акцентный цвет для названия компании */
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}

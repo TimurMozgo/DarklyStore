@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Магазин одежды</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- ВАЖНО: Подключение библиотеки Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Шапка с логотипом и переключателем языка -->
     <header class="app-header">
         <div class="logo-container">
             <img src="./img/darkly_store_logo.png" class="logo" alt="Logo">
@@ -59,6 +57,30 @@
                         </svg>
                         <span data-i18n="tshirts">Футболки</span>
                     </div>
+                    <div class="category-card" data-category="hoodies">
+                        <svg class="category-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M25 30 L50 20 L75 30 L80 50 L75 55 L75 85 L25 85 L25 55 L20 50 Z" fill="none" stroke="currentColor" stroke-width="3"/>
+                            <path d="M35 30 Q50 45 65 30" fill="none" stroke="currentColor" stroke-width="2"/>
+                            <line x1="50" y1="30" x2="50" y2="85" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        <span data-i18n="hoodies">Худи</span>
+                    </div>
+                    <div class="category-card" data-category="hats">
+                        <svg class="category-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <ellipse cx="50" cy="65" rx="40" ry="12" fill="none" stroke="currentColor" stroke-width="3"/>
+                            <path d="M25 65 Q25 25 50 25 Q75 25 75 65" fill="none" stroke="currentColor" stroke-width="3"/>
+                            <line x1="50" y1="25" x2="50" y2="15" stroke="currentColor" stroke-width="2"/>
+                            <circle cx="50" cy="12" r="4" fill="currentColor"/>
+                        </svg>
+                        <span data-i18n="hats">Головные уборы</span>
+                    </div>
+                    <div class="category-card" data-category="pants">
+                        <svg class="category-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M25 20 L75 20 L75 50 L60 50 L55 85 L45 85 L40 50 L25 50 Z" fill="none" stroke="currentColor" stroke-width="3"/>
+                            <line x1="50" y1="20" x2="50" y2="50" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        <span data-i18n="pants">Штаны</span>
+                    </div>
                     <div class="category-card" data-category="shorts">
                         <svg class="category-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                             <path d="M30 25 L70 25 L70 45 L60 45 L55 75 L45 75 L40 45 L30 45 Z" fill="none" stroke="currentColor" stroke-width="3"/>
@@ -74,6 +96,15 @@
                         </svg>
                         <span data-i18n="accessories">Аксессуары</span>
                     </div>
+                    <div class="category-card" data-category="custom">
+                        <svg class="category-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="20" y="30" width="60" height="50" rx="5" fill="none" stroke="currentColor" stroke-width="3"/>
+                            <path d="M35 50 L50 65 L65 40" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="70" cy="25" r="8" fill="currentColor"/>
+                            <path d="M70 25 L70 15" stroke="currentColor" stroke-width="3"/>
+                        </svg>
+                        <span data-i18n="custom">Речі під замовлення</span>
+                    </div>
                 </div>
             </div>
         </section>
@@ -86,6 +117,9 @@
                     <button class="filter-btn active" data-filter="all" data-i18n="all">Все</button>
                     <button class="filter-btn" data-filter="jackets" data-i18n="jackets">Куртки/Жилетки</button>
                     <button class="filter-btn" data-filter="tshirts" data-i18n="tshirts">Футболки</button>
+                    <button class="filter-btn" data-filter="hoodies" data-i18n="hoodies">Худи</button>
+                    <button class="filter-btn" data-filter="hats" data-i18n="hats">Головные уборы</button>
+                    <button class="filter-btn" data-filter="pants" data-i18n="pants">Штаны</button>
                     <button class="filter-btn" data-filter="shorts" data-i18n="shorts">Шорты</button>
                     <button class="filter-btn" data-filter="accessories" data-i18n="accessories">Аксессуары</button>
                 </div>
@@ -218,7 +252,6 @@
             <div id="admin-empty" class="admin-empty">
                 <p data-i18n="noProducts">Товаров пока нет</p>
             </div>
-            <!-- Убрали onclick, добавили id="add-product-btn" -->
             <button class="btn-primary" id="add-product-btn" data-i18n="addNewProduct">+ Добавить новый товар</button>
         </section>
 
@@ -256,8 +289,12 @@
                             <option value="" data-i18n="selectCategory">Выберите категорию</option>
                             <option value="jackets" data-i18n="jackets">Куртки/Жилетки</option>
                             <option value="tshirts" data-i18n="tshirts">Футболки</option>
+                            <option value="hoodies" data-i18n="hoodies">Худи</option>
+                            <option value="hats" data-i18n="hats">Головные уборы</option>
+                            <option value="pants" data-i18n="pants">Штаны</option>
                             <option value="shorts" data-i18n="shorts">Шорты</option>
                             <option value="accessories" data-i18n="accessories">Аксессуары</option>
+                            <button class="filter-btn" data-filter="custom" data-i18n="custom">Вещи под заказ</button>
                         </select>
                     </div>
                     <button type="submit" class="btn-primary" id="form-submit-btn" data-i18n="saveProduct">Сохранить</button>
@@ -265,12 +302,6 @@
             </div>
         </div>
     </main>
-
-        <!-- Футер с копирайтом -->
-
-    <!-- <footer class="app-footer">
-        <p>Разработано командой <strong>TINELAB</strong></p>
-    </footer> -->
 
     <!-- Нижнее навигационное меню -->
     <nav class="bottom-nav">

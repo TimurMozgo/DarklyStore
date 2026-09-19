@@ -1,8 +1,9 @@
 // ==========================================
-// ИНИЦИАЛИЗАЦИЯ
+// 1. ИНИЦИАЛИЗАЦИЯ И ПЕРЕМЕННЫЕ
 // ==========================================
 let tg = null;
 let currentUser = null;
+let currentEditImages = []; // Массив для хранения картинок при редактировании
 
 try {
     if (window.Telegram && window.Telegram.WebApp) {
@@ -29,7 +30,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 try {
     if (typeof window.supabase !== 'undefined') {
         supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        console.log('✅ Supabase подключен');
+        console.log('✅ Supabase клиент успешно создан');
     }
 } catch (e) {
     console.warn('⚠️ Supabase не доступен');
@@ -41,7 +42,6 @@ let currentTheme = localStorage.getItem('theme') || 'light';
 let currentPage = 'home';
 let currentCategory = 'all';
 
-// Данные (из localStorage)
 function safeLoad(key, fallback) {
     try {
         const data = localStorage.getItem(key);
@@ -52,10 +52,10 @@ function safeLoad(key, fallback) {
 let cart = safeLoad('cart', []);
 let favorites = safeLoad('favorites', []);
 let orders = safeLoad('orders', []);
-let products = safeLoad('products', []);
+let products = []; // Загружается из Supabase при старте!
 
 // ==========================================
-// УВЕДОМЛЕНИЯ
+// 2. УВЕДОМЛЕНИЯ
 // ==========================================
 function showNotification(message, type = 'info', duration = 3000) {
     let container = document.getElementById('notifications');
@@ -86,7 +86,7 @@ if (!document.getElementById('notif-style')) {
 }
 
 // ==========================================
-// ПЕРЕВОДЫ И ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+// 3. ПЕРЕВОДЫ (С НОВЫМИ КАТЕГОРИЯМИ)
 // ==========================================
 const svgIcons = {
     heart: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 21 L10.55 19.7 Q5 15 5 10 Q5 6 8 6 Q10 6 12 8 Q14 6 16 6 Q19 6 19 10 Q19 15 13.45 19.7 Z" fill="none" stroke="currentColor" stroke-width="2"/></svg>`,
@@ -95,8 +95,9 @@ const svgIcons = {
 
 const translations = {
     ru: {
-        welcome: 'Добро пожаловать!', welcomeText: 'Лучшая одежда для вашего стиля', categories: 'Категории',
+        welcome: 'Добро пожаловать!', custom: 'Вещи под заказ', welcomeText: 'Лучшая одежда для вашего стиля', categories: 'Категории',
         catalog: 'Каталог', all: 'Все', jackets: 'Куртки/Жилетки', tshirts: 'Футболки', shorts: 'Шорты', accessories: 'Аксессуары',
+        hoodies: 'Худи', hats: 'Головные уборы', pants: 'Штаны',
         cart: 'Корзина', cartEmpty: 'Корзина пуста', total: 'Итого:', checkout: 'Оформить заказ',
         home: 'Главная', profile: 'Профиль', myOrders: 'Мои заказы', favorites: 'Избранное', adminPanel: 'Админ панель',
         noOrders: 'У вас пока нет заказов', noFavorites: 'В избранном пока пусто', noProducts: 'Товаров пока нет',
@@ -113,8 +114,9 @@ const translations = {
         productSaved: 'Товар успешно сохранен!', fillAllFields: 'Заполните все обязательные поля!', selectImage: 'Выберите хотя бы одно изображение!'
     },
     uk: {
-        welcome: 'Ласкаво просимо!', welcomeText: 'Найкращий одяг для вашого стилю', categories: 'Категорії',
+        welcome: 'Ласкаво просимо!', custom: 'Речі під замовлення', welcomeText: 'Найкращий одяг для вашого стилю', categories: 'Категорії',
         catalog: 'Каталог', all: 'Всі', jackets: 'Куртки/Жилетки', tshirts: 'Футболки', shorts: 'Шорти', accessories: 'Аксесуари',
+        hoodies: 'Худі', hats: 'Головні убори', pants: 'Штани',
         cart: 'Кошик', cartEmpty: 'Кошик порожній', total: 'Разом:', checkout: 'Оформити замовлення',
         home: 'Головна', profile: 'Профіль', myOrders: 'Мої замовлення', favorites: 'Обране', adminPanel: 'Адмін панель',
         noOrders: 'У вас поки немає замовлень', noFavorites: 'В обраному поки порожньо', noProducts: 'Товарів поки немає',
@@ -132,11 +134,8 @@ const translations = {
     }
 };
 
-function t(key) { 
-    return translations[currentLang]?.[key] || translations['ru']?.[key] || key; 
-}
+function t(key) { return translations[currentLang]?.[key] || translations['ru']?.[key] || key; }
 
-// АДАПТИРОВАНО ПОД НОВУЮ ТАБЛИЦУ
 function getProductName(p) { return p.name || 'Товар'; }
 function getProductDesc(p) { return p.description || ''; }
 function getProductImage(p) { 
@@ -145,8 +144,18 @@ function getProductImage(p) {
     }
     return p.image || p.images || ''; 
 }
+
 function getCategoryName(cat) {
-    const map = { 'jackets': t('jackets'), 'tshirts': t('tshirts'), 'shorts': t('shorts'), 'accessories': t('accessories') };
+    const map = { 
+        'jackets': t('jackets'), 
+        'tshirts': t('tshirts'), 
+        'hoodies': t('hoodies'),
+        'hats': t('hats'),
+        'pants': t('pants'),
+        'shorts': t('shorts'), 
+        'accessories': t('accessories'),
+        'custom': t('custom')  // ← Добавил это
+    };
     return map[cat] || cat || '';
 }
 
@@ -155,12 +164,48 @@ function saveData() {
         localStorage.setItem('cart', JSON.stringify(cart));
         localStorage.setItem('favorites', JSON.stringify(favorites));
         localStorage.setItem('orders', JSON.stringify(orders));
-        localStorage.setItem('products', JSON.stringify(products));
     } catch (e) { console.error('Ошибка сохранения:', e); }
 }
 
 // ==========================================
-// ЦЕНТРАЛИЗОВАННОЕ ПРИМЕНЕНИЕ ПЕРЕВОДОВ
+// 4. ЗАГРУЗКА ТОВАРОВ ИЗ SUPABASE (КРИТИЧЕСКИ ВАЖНО!)
+// ==========================================
+async function loadProducts() {
+    console.log('📡 Загрузка товаров из Supabase...');
+    if (!supabaseClient) {
+        console.warn('⚠️ Supabase не инициализирован, используем localStorage как фоллбэк');
+        products = safeLoad('products', []);
+        renderProducts();
+        renderAdminPanel();
+        return;
+    }
+    try {
+        const { data, error } = await supabaseClient
+            .from('products')
+            .select('*')
+            .order('id', { ascending: false });
+
+        if (error) throw error;
+
+        products = data || [];
+        console.log(`✅ Загружено товаров из БД: ${products.length}`);
+        
+        // Сохраняем копию в localStorage как кэш на случай сбоя сети
+        localStorage.setItem('products', JSON.stringify(products));
+        
+        renderProducts();
+        renderAdminPanel();
+    } catch (err) {
+        console.error('❌ Ошибка загрузки товаров:', err);
+        showNotification('Ошибка загрузки товаров', 'error');
+        products = safeLoad('products', []); // Fallback
+        renderProducts();
+        renderAdminPanel();
+    }
+}
+
+// ==========================================
+// 5. НАВИГАЦИЯ И ПЕРЕВОДЫ
 // ==========================================
 function applyTranslations() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -174,11 +219,7 @@ function applyTranslations() {
     document.documentElement.lang = currentLang;
 }
 
-// ==========================================
-// НАВИГАЦИЯ
-// ==========================================
 function switchPage(page) {
-    // 🔒 ЗАЩИТА: Если пытаются открыть админку без прав, перекидываем на главную
     if (page === 'admin' && !isAdmin()) {
         console.warn('⛔ Попытка несанкционированного доступа к админке!');
         page = 'home'; 
@@ -204,7 +245,7 @@ function switchPage(page) {
 }
 
 // ==========================================
-// РЕНДЕРИНГ ТОВАРОВ
+// 6. РЕНДЕРИНГ ТОВАРОВ
 // ==========================================
 function renderProducts() {
     const container = document.getElementById('products-container');
@@ -278,7 +319,7 @@ function openProductModal(productId) {
     
     if (imagesContainer) {
         const images = product.images ? product.images.split(',').map(img => img.trim()) : [getProductImage(product)];
-        imagesContainer.innerHTML = images.map(img => `<img src="${img}" alt="product" style="max-width:100%; border-radius:8px; margin-bottom:10px;" onerror="this.style.display='none'">`).join('');
+        imagesContainer.innerHTML = images.map(img => `<img src="${img}" alt="product" style="width:100%; height:100%; object-fit:cover;">`).join('');
     }
     
     if (addBtn) {
@@ -287,7 +328,6 @@ function openProductModal(productId) {
             closeModal('product-modal');
         };
     }
-    
     openModal('product-modal');
 }
 
@@ -317,7 +357,7 @@ function updateCartBadge() {
 }
 
 // ==========================================
-// КОРЗИНА
+// 7. КОРЗИНА, ЗАКАЗЫ, ИЗБРАННОЕ
 // ==========================================
 function renderCart() {
     const container = document.getElementById('cart-items');
@@ -364,11 +404,9 @@ function renderCart() {
             const id = parseInt(btn.dataset.id);
             const item = cart.find(i => i.id === id);
             if (!item) return;
-            if (btn.dataset.action === 'increase') {
-                item.quantity++;
-            } else {
-                item.quantity--;
-            }
+            if (btn.dataset.action === 'increase') item.quantity++;
+            else item.quantity--;
+            
             if (item.quantity === 0) cart = cart.filter(i => i.id !== id);
             saveData();
             renderCart();
@@ -386,20 +424,11 @@ function renderCart() {
     });
 }
 
-// ==========================================
-// ЗАКАЗЫ
-// ==========================================
 function renderOrders() {
     const container = document.getElementById('orders-list');
     const empty = document.getElementById('orders-empty');
     if (!container || !empty) return;
-    
-    if (orders.length === 0) {
-        container.innerHTML = '';
-        empty.style.display = 'block';
-        return;
-    }
-    
+    if (orders.length === 0) { container.innerHTML = ''; empty.style.display = 'block'; return; }
     empty.style.display = 'none';
     container.innerHTML = orders.slice().reverse().map(order => `
         <div class="order-card">
@@ -414,20 +443,11 @@ function renderOrders() {
         </div>`).join('');
 }
 
-// ==========================================
-// ИЗБРАННОЕ
-// ==========================================
 function renderFavorites() {
     const container = document.getElementById('favorites-list');
     const empty = document.getElementById('favorites-empty');
     if (!container || !empty) return;
-    
-    if (favorites.length === 0) {
-        container.innerHTML = '';
-        empty.style.display = 'block';
-        return;
-    }
-    
+    if (favorites.length === 0) { container.innerHTML = ''; empty.style.display = 'block'; return; }
     empty.style.display = 'none';
     const favProducts = products.filter(p => favorites.includes(p.id));
     
@@ -454,7 +474,6 @@ function renderFavorites() {
             haptic('success');
         });
     });
-    
     container.querySelectorAll('.btn-add-to-cart').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -464,54 +483,21 @@ function renderFavorites() {
 }
 
 // ==========================================
-// АДМИН ПАНЕЛЬ
+// 8. АДМИН ПАНЕЛЬ
 // ==========================================
-
-// ==========================================
-// АДМИН-ПАНЕЛЬ: ПРОВЕРКА ДОСТУПА ПО ID
-// ==========================================
-const ADMIN_IDS = [6088315974, 8361950436]; // Разрешённые ID админов
+const ADMIN_IDS = [6088315974, 8361950436];
 
 function isAdmin() {
-    // Если открыто в обычном браузере (без Telegram) — показываем для удобной разработки
-    if (!tg) {
-        console.log('🔓 Запуск вне Telegram — админка доступна для тестов');
-        return true;
-    }
-    
-    // Если открыто в Telegram — проверяем ID
+    if (!tg) return true; // Для тестов в браузере
     const userId = tg?.initDataUnsafe?.user?.id;
-    console.log('👤 ID пользователя:', userId);
-    
-    if (userId && ADMIN_IDS.includes(Number(userId))) {
-        console.log('✅ Это админ! Доступ разрешён');
-        return true;
-    }
-    
-    console.log('❌ Это не админ. Доступ запрещён');
-    return false;
+    return userId && ADMIN_IDS.includes(Number(userId));
 }
 
 function updateAdminVisibility() {
-    const adminBtn = document.getElementById('adminBtn');
-    const adminPage = document.getElementById('admin-page');
     const adminOnlyElements = document.querySelectorAll('.admin-only');
-    
     if (isAdmin()) {
-        // Разрешаем доступ: показываем кнопку и элементы
-        if (adminBtn) adminBtn.style.display = 'flex';
-        
-        // ВАЖНО: очищаем inline-стиль, чтобы страница подчинялась CSS-классу .active
-        if (adminPage) adminPage.style.display = ''; 
-        
         adminOnlyElements.forEach(el => { el.style.display = 'flex'; });
     } else {
-        // Запрещаем доступ: всё скрываем
-        if (adminBtn) adminBtn.style.display = 'none';
-        if (adminPage) {
-            adminPage.style.display = 'none';
-            adminPage.classList.remove('active'); // На всякий случай убираем класс active
-        }
         adminOnlyElements.forEach(el => { el.style.display = 'none'; });
     }
 }
@@ -523,14 +509,9 @@ function renderAdminPanel() {
     if (!list || !empty || !count) return;
     
     count.textContent = `${t('total')}: ${products.length}`;
-    
-    if (products.length === 0) {
-        list.innerHTML = '';
-        empty.style.display = 'block';
-        return;
-    }
-    
+    if (products.length === 0) { list.innerHTML = ''; empty.style.display = 'block'; return; }
     empty.style.display = 'none';
+    
     list.innerHTML = products.map(product => `
         <div class="admin-product-card" data-id="${product.id}">
             <div class="admin-product-header">
@@ -559,21 +540,13 @@ function renderAdminPanel() {
 function openAddProductModal() {
     const titleEl = document.getElementById('form-modal-title');
     if(titleEl) titleEl.textContent = t('addProduct');
-    
     const form = document.getElementById('product-form');
     if(form) form.reset();
-    
     const editIdEl = document.getElementById('edit-product-id');
     if(editIdEl) editIdEl.value = '';
-    
-    // Очищаем массив изображений для нового товара
     currentEditImages = [];
-    
     const preview = document.getElementById('form-image-preview');
-    if(preview) {
-        preview.innerHTML = '';
-        preview.classList.remove('active');
-    }
+    if(preview) { preview.innerHTML = ''; preview.classList.remove('active'); }
     openModal('product-form-modal');
 }
 
@@ -583,47 +556,34 @@ function editProduct(productId) {
     
     const titleEl = document.getElementById('form-modal-title');
     if(titleEl) titleEl.textContent = t('editProduct');
-    
     const editIdEl = document.getElementById('edit-product-id');
     if(editIdEl) editIdEl.value = product.id;
-    
     const nameEl = document.getElementById('form-product-name');
     if(nameEl) nameEl.value = product.name || '';
-    
     const priceEl = document.getElementById('form-product-price');
     if(priceEl) priceEl.value = product.price || '';
-    
     const descEl = document.getElementById('form-product-description');
     if(descEl) descEl.value = product.description || '';
-    
     const catEl = document.getElementById('form-product-category');
     if(catEl) catEl.value = product.category || '';
     
-    // Загружаем существующие изображения в глобальный массив
     if (product.images) {
-        currentEditImages = typeof product.images === 'string' 
-            ? product.images.split(',').map(img => img.trim()) 
-            : product.images;
+        currentEditImages = typeof product.images === 'string' ? product.images.split(',').map(img => img.trim()) : product.images;
     } else {
         currentEditImages = [];
     }
-    
-    // Рендерим превью с крестиками
     renderImagePreview();
-    
     openModal('product-form-modal');
 }
 
 function renderImagePreview() {
     const preview = document.getElementById('form-image-preview');
     if (!preview) return;
-    
     if (currentEditImages.length === 0) {
         preview.innerHTML = '';
         preview.classList.remove('active');
         return;
     }
-    
     preview.classList.add('active');
     preview.innerHTML = currentEditImages.map((img, index) => `
         <div style="position: relative; display: inline-block; margin: 5px;">
@@ -632,93 +592,52 @@ function renderImagePreview() {
         </div>
     `).join('');
     
-    // Навешиваем обработчики на крестики
     preview.querySelectorAll('.remove-image-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            const index = parseInt(btn.dataset.index);
-            removeImageFromPreview(index);
+            currentEditImages.splice(parseInt(btn.dataset.index), 1);
+            renderImagePreview();
+            haptic('success');
         });
     });
 }
 
-function removeImageFromPreview(index) {
-    // Удаляем из массива
-    currentEditImages.splice(index, 1);
-    
-    // Перерисовываем превью
-    renderImagePreview();
-    
-    haptic('success');
-}
-
-function deleteProduct(productId) {
+async function deleteProduct(productId) {
     if (!confirm(t('deleteConfirm'))) return;
-    
-    console.log('🗑️ Удаляем товар с ID:', productId);
-    
-    // Находим товар, чтобы удалить его фото из Storage
     const productToDelete = products.find(p => p.id == productId);
     
-    // Удаляем из Supabase
-    supabaseClient.from('products').delete().eq('id', productId).then(async ({ error }) => {
-        if (error) {
-            console.error('❌ Ошибка удаления из БД:', error);
-            showNotification('Ошибка удаления: ' + error.message, 'error');
-            return;
+    const { error } = await supabaseClient.from('products').delete().eq('id', productId);
+    if (error) {
+        console.error('❌ Ошибка удаления из БД:', error);
+        showNotification('Ошибка удаления: ' + error.message, 'error');
+        return;
+    }
+    
+    if (productToDelete && productToDelete.images) {
+        const oldImagesArray = typeof productToDelete.images === 'string' ? productToDelete.images.split(',') : productToDelete.images;
+        const oldPaths = oldImagesArray.map(url => url.split('/').pop()).filter(path => path.length > 0);
+        if (oldPaths.length > 0) {
+            await supabaseClient.storage.from('product-images').remove(oldPaths);
         }
-        
-        console.log('✅ Товар удалён из базы данных');
-        
-        // 🗑️ Удаляем файлы из Storage (если они есть)
-        if (productToDelete && productToDelete.images) {
-            const oldImagesArray = typeof productToDelete.images === 'string' 
-                ? productToDelete.images.split(',') 
-                : productToDelete.images;
-            
-            const oldPaths = oldImagesArray.map(url => url.split('/').pop()).filter(path => path.length > 0);
-            
-            if (oldPaths.length > 0) {
-                const { error: deleteError } = await supabaseClient
-                    .storage
-                    .from('product-images')
-                    .remove(oldPaths);
-                
-                if (deleteError) {
-                    console.warn('⚠️ Не удалось удалить фото из Storage:', deleteError);
-                } else {
-                    console.log('🗑️ Фото удалены из Storage');
-                }
-            }
-        }
-        
-        // Удаляем локально из всех массивов (используем нестрогое сравнение !=)
-        products = products.filter(p => p.id != productId);
-        cart = cart.filter(i => i.id != productId);
-        favorites = favorites.filter(f => f != productId);
-        
-        // Сохраняем в localStorage
-        saveData();
-        
-        showNotification(t('productDeleted'), 'success');
-        haptic('success');
-        
-        // 🔄 ПОЛНАЯ ПЕРЕЗАГРУЗКА СТРАНИЦЫ — это гарантированно обновит всё
-        setTimeout(() => {
-            location.reload();
-        }, 1000);
-    });
+    }
+    
+    products = products.filter(p => p.id != productId);
+    cart = cart.filter(i => i.id != productId);
+    favorites = favorites.filter(f => f != productId);
+    saveData();
+    showNotification(t('productDeleted'), 'success');
+    haptic('success');
+    setTimeout(() => location.reload(), 1000);
 }
 
 // ==========================================
-// ОБРАБОТКА ФОРМЫ ДОБАВЛЕНИЯ/РЕДАКТИРОВАНИЯ
+// 9. ОБРАБОТКА ФОРМЫ ТОВАРА
 // ==========================================
 const productForm = document.getElementById('product-form');
 if (productForm) {
     productForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
         const productId = document.getElementById('edit-product-id').value;
         const name = document.getElementById('form-product-name').value.trim();
         const price = parseInt(document.getElementById('form-product-price').value);
@@ -732,7 +651,6 @@ if (productForm) {
         }
 
         const saveProduct = async (imageUrls) => {
-            // ИСПРАВЛЕНИЕ: Если новые фото не выбраны, используем старые!
             const existingProduct = productId ? products.find(p => p.id == productId) : null;
             const finalImages = (imageUrls && imageUrls.length > 0) 
                 ? imageUrls 
@@ -748,127 +666,51 @@ if (productForm) {
             };
 
             if (productId) {
-                // === РЕДАКТИРОВАНИЕ ===
-                try {
-                    const { data, error } = await supabaseClient
-                        .from('products')
-                        .update(productData)
-                        .eq('id', parseInt(productId)) // Явное преобразование в число для BIGINT
-                        .select();
-                    
-                    if (error) throw error;
-                    
-                    const index = products.findIndex(p => p.id == productId);
-                    if (index !== -1) {
-                        products[index] = { ...products[index], ...productData, id: parseInt(productId) };
-                    }
-                } catch (err) {
-                    console.error('Ошибка обновления:', err);
-                    showNotification('Ошибка при сохранении', 'error');
-                    return;
-                }
+                const { error } = await supabaseClient.from('products').update(productData).eq('id', parseInt(productId)).select();
+                if (error) { showNotification('Ошибка при сохранении', 'error'); return; }
+                const index = products.findIndex(p => p.id == productId);
+                if (index !== -1) products[index] = { ...products[index], ...productData, id: parseInt(productId) };
             } else {
-                // === ДОБАВЛЕНИЕ ===
-                try {
-                    if (!finalImages || finalImages.length === 0) {
-                        showNotification(t('selectImage'), 'error');
-                        return;
-                    }
-                    
-                    const { data, error } = await supabaseClient
-                        .from('products')
-                        .insert([productData])
-                        .select(); 
-                    
-                    if (error) throw error;
-                    
-                    products.push({
-                        ...productData,
-                        id: data[0].id 
-                    });
-                } catch (err) {
-                    console.error('Ошибка добавления:', err);
-                    showNotification('Ошибка при сохранении', 'error');
-                    return;
-                }
+                if (!finalImages || finalImages.length === 0) { showNotification(t('selectImage'), 'error'); return; }
+                const { data, error } = await supabaseClient.from('products').insert([productData]).select();
+                if (error) { showNotification('Ошибка при сохранении', 'error'); return; }
+                products.push({ ...productData, id: data[0].id });
             }
             
             saveData();
             showNotification(t('productSaved'), 'success');
-            
-            const form = document.getElementById('product-form');
-            if(form) form.reset();
-            const preview = document.getElementById('form-image-preview');
-            if(preview) {
-                preview.innerHTML = '';
-                preview.classList.remove('active');
-            }
-            
+            productForm.reset();
+            document.getElementById('form-image-preview').innerHTML = '';
+            document.getElementById('form-image-preview').classList.remove('active');
             closeModal('product-form-modal');
             renderAdminPanel();
             haptic('success');
         };
 
-                // Загружаем фото в Supabase Storage (ТОЛЬКО если выбраны НОВЫЕ файлы)
         if (imageFiles && imageFiles.length > 0) {
-            
-            // 🗑️ Удаляем старые фото из Storage (те, что были в currentEditImages)
             if (currentEditImages.length > 0) {
                 const oldPaths = currentEditImages.map(url => url.split('/').pop()).filter(path => path.length > 0);
-                
-                if (oldPaths.length > 0) {
-                    const { error: deleteError } = await supabaseClient
-                        .storage
-                        .from('product-images')
-                        .remove(oldPaths);
-                    
-                    if (deleteError) {
-                        console.warn('Не удалось удалить старые фото:', deleteError);
-                    }
-                }
+                if (oldPaths.length > 0) await supabaseClient.storage.from('product-images').remove(oldPaths);
             }
-
-            //  Загружаем новые фото
             const imageUrls = [];
             let loaded = 0;
             const uniqueId = Date.now();
-            
             Array.from(imageFiles).forEach((file, index) => {
                 const reader = new FileReader();
                 reader.onload = async (event) => {
-                    const base64 = event.target.result;
-                    try {
-                        const response = await fetch(base64);
-                        const blob = await response.blob();
-                        const fileName = `${uniqueId}_${index}_${file.name.replace(/\s/g, '_')}`;
-                        
-                        const { data, error } = await supabaseClient
-                            .storage
-                            .from('product-images')
-                            .upload(fileName, blob, { upsert: true });
-                        
-                        if (error) throw error;
-                        
-                        const { data: { publicUrl } } = supabaseClient
-                            .storage
-                            .from('product-images')
-                            .getPublicUrl(fileName);
-                        
-                        imageUrls[index] = publicUrl;
-                        loaded++;
-                        
-                        if (loaded === imageFiles.length) {
-                            saveProduct(imageUrls);
-                        }
-                    } catch (err) {
-                        console.error('Ошибка загрузки фото:', err);
-                        showNotification('Ошибка загрузки фото', 'error');
-                    }
+                    const response = await fetch(event.target.result);
+                    const blob = await response.blob();
+                    const fileName = `${uniqueId}_${index}_${file.name.replace(/\s/g, '_')}`;
+                    const { error } = await supabaseClient.storage.from('product-images').upload(fileName, blob, { upsert: true });
+                    if (error) { showNotification('Ошибка загрузки фото', 'error'); return; }
+                    const { data: { publicUrl } } = supabaseClient.storage.from('product-images').getPublicUrl(fileName);
+                    imageUrls[index] = publicUrl;
+                    loaded++;
+                    if (loaded === imageFiles.length) saveProduct(imageUrls);
                 };
                 reader.readAsDataURL(file);
             });
         } else if (productId) {
-            // При редактировании БЕЗ новых фото — используем currentEditImages (могли удалить некоторые)
             saveProduct(currentEditImages);
         } else {
             showNotification(t('selectImage'), 'error');
@@ -877,39 +719,20 @@ if (productForm) {
 }
 
 // ==========================================
-// МОДАЛКИ
+// 10. МОДАЛКИ И ОФОРМЛЕНИЕ ЗАКАЗА
 // ==========================================
-function openModal(modalId) {
-    const m = document.getElementById(modalId);
-    if (m) m.classList.add('active');
-}
+function openModal(modalId) { const m = document.getElementById(modalId); if (m) m.classList.add('active'); }
+function closeModal(modalId) { const m = document.getElementById(modalId); if (m) m.classList.remove('active'); }
 
-function closeModal(modalId) {
-    const m = document.getElementById(modalId);
-    if (m) m.classList.remove('active');
-}
-
-// ==========================================
-// ОФОРМЛЕНИЕ ЗАКАЗА
-// ==========================================
 function checkout() {
-    if (cart.length === 0) {
-        haptic('error');
-        return;
-    }
+    if (cart.length === 0) { haptic('error'); return; }
     openModal('checkout-modal');
 }
 
-// ==========================================
-// ВАЛИДАЦИЯ ТЕЛЕФОНА
-// ==========================================
 function validatePhone(phone) {
     if (!phone) return false;
-    // Убираем все пробелы, тире и скобки
     const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
-    // Проверяем: должно быть +380 и ещё 9 цифр
-    const isValid = /^\+380\d{9}$/.test(cleanPhone);
-    return isValid;
+    return /^\+380\d{9}$/.test(cleanPhone);
 }
 
 const phoneInput = document.getElementById('customer-phone');
@@ -917,55 +740,22 @@ if (phoneInput) {
     phoneInput.addEventListener('input', (e) => {
         const errorText = document.getElementById('phone-error');
         const phone = e.target.value.trim();
-        
-        console.log('📱 Введён номер:', phone, 'Валидный:', validatePhone(phone));
-        
-        // Если номер валидный — скрываем ошибку
         if (validatePhone(phone)) {
-            if (errorText) {
-                errorText.classList.add('hidden');
-                errorText.style.display = 'none'; // На всякий случай
-            }
+            if (errorText) { errorText.classList.add('hidden'); errorText.style.display = 'none'; }
         } else if (phone.length > 0) {
-            // Показываем ошибку только если что-то ввели
-            if (errorText) {
-                errorText.classList.remove('hidden');
-                errorText.style.display = 'block';
-            }
-        }
-    });
-    
-    // Также проверяем при потере фокуса
-    phoneInput.addEventListener('blur', (e) => {
-        const errorText = document.getElementById('phone-error');
-        const phone = e.target.value.trim();
-        
-        if (phone.length > 0 && !validatePhone(phone)) {
-            if (errorText) {
-                errorText.classList.remove('hidden');
-                errorText.style.display = 'block';
-            }
+            if (errorText) { errorText.classList.remove('hidden'); errorText.style.display = 'block'; }
         }
     });
 }
 
-function generateOrderNumber() {
-    return Math.floor(100000 + Math.random() * 900000);
-}
+function generateOrderNumber() { return Math.floor(100000 + Math.random() * 900000); }
 
 function confirmOrder(name, phone) {
     const orderNumber = generateOrderNumber();
-    
-    // Формируем список товаров для отправки
     const orderItems = cart.map(item => {
         const product = products.find(p => p.id === item.id);
-        return {
-            name: getProductName(product),
-            price: product.price,
-            quantity: item.quantity
-        };
+        return { name: getProductName(product), price: product.price, quantity: item.quantity };
     });
-    
     const orderTotal = cart.reduce((sum, item) => {
         const product = products.find(p => p.id === item.id);
         return sum + (product.price * item.quantity);
@@ -979,57 +769,32 @@ function confirmOrder(name, phone) {
         customer: { name, phone }
     };
     
-    // 📤 ОТПРАВЛЯЕМ ДАННЫЕ В N8N
     const webhookUrl = 'https://tiktiok.xyz/webhook/546e6aa6-67bb-4121-9c4b-ad9958342307';
-    
     fetch(webhookUrl, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            orderId: orderNumber,
-            customerName: name,
-            customerPhone: phone,
-            items: orderItems,
-            total: orderTotal,
-            date: order.date,
-            language: currentLang
-        })
-    })
-    .then(response => {
-        console.log('✅ Заказ отправлен в n8n:', response.status);
-    })
-    .catch(error => {
-        console.error('❌ Ошибка отправки в n8n:', error);
-        // Не прерываем процесс, даже если отправка не удалась
-    });
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: orderNumber, customerName: name, customerPhone: phone, items: orderItems, total: orderTotal, date: order.date, language: currentLang })
+    }).catch(error => console.error('❌ Ошибка отправки в n8n:', error));
     
-    // Сохраняем заказ локально
     orders.push(order);
     cart = [];
     saveData();
     updateCartBadge();
     closeModal('checkout-modal');
-    
-    // Показываем номер заказа клиенту
     const orderNumDisplay = document.getElementById('order-number-display');
     if(orderNumDisplay) orderNumDisplay.textContent = `${t('orderNumber')}${orderNumber}`;
-    
     openModal('success-modal');
     haptic('success');
 }
 
 // ==========================================
-// ГЛАВНАЯ ИНИЦИАЛИЗАЦИЯ
+// 11. ГЛАВНАЯ ИНИЦИАЛИЗАЦИЯ
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     console.log('✅ Приложение запускается...');
     
-    // Тема
     currentTheme = localStorage.getItem('theme') || 'light';
     document.body.classList.toggle('dark', currentTheme === 'dark');
-    
     const themeToggle = document.getElementById('theme-toggle');
     if (themeToggle) {
         themeToggle.addEventListener('click', () => {
@@ -1040,12 +805,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Язык
     currentLang = localStorage.getItem('language') || 'ru';
     document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
     const activeLangBtn = document.querySelector(`.lang-btn[data-lang="${currentLang}"]`);
     if (activeLangBtn) activeLangBtn.classList.add('active');
-    
     applyTranslations();
 
     document.querySelectorAll('.lang-btn').forEach(btn => {
@@ -1054,7 +817,6 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.classList.add('active');
             currentLang = btn.dataset.lang;
             localStorage.setItem('language', currentLang);
-            
             applyTranslations();
             renderProducts();
             if (currentPage === 'cart') renderCart();
@@ -1065,37 +827,28 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Пользователь
     if (currentUser) {
         const nicknameEl = document.getElementById('user-nickname');
         if(nicknameEl) nicknameEl.textContent = currentUser.first_name || 'Пользователь';
-        
         if (currentUser.photo_url) {
             const avatarContainer = document.querySelector('.avatar-container');
-            if (avatarContainer) {
-                avatarContainer.innerHTML = `<img src="${currentUser.photo_url}" alt="Avatar" class="user-avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
-            }
+            if (avatarContainer) avatarContainer.innerHTML = `<img src="${currentUser.photo_url}" alt="Avatar" class="user-avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
         }
     } else {
         const nicknameEl = document.getElementById('user-nickname');
         if(nicknameEl) nicknameEl.textContent = 'Гость';
     }
 
-    // 🔒 ПРОВЕРКА ПРАВ ДОСТУПА К АДМИН-ПАНЕЛИ (ЗАМЕНА СТАРОЙ СТРОКИ)
     updateAdminVisibility();
-
     updateCartBadge();
-    renderProducts();
+    
+    // 🔥 ГЛАВНОЕ: Загружаем товары из базы при старте!
+    loadProducts();
 
-    // Навигация
     document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            switchPage(btn.dataset.page);
-        });
+        btn.addEventListener('click', (e) => { e.preventDefault(); switchPage(btn.dataset.page); });
     });
 
-    // Фильтры категорий
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -1105,20 +858,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Категории на главной
     document.querySelectorAll('.category-card').forEach(card => {
         card.addEventListener('click', () => {
             currentCategory = card.dataset.category || 'all';
             switchPage('catalog');
             setTimeout(() => {
-                document.querySelectorAll('.filter-btn').forEach(b => {
-                    b.classList.toggle('active', b.dataset.filter === currentCategory);
-                });
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === currentCategory));
             }, 100);
         });
     });
 
-    // Оформление заказа
     const checkoutBtn = document.getElementById('checkout-btn');
     if (checkoutBtn) checkoutBtn.addEventListener('click', checkout);
 
@@ -1129,53 +878,31 @@ document.addEventListener('DOMContentLoaded', () => {
             const name = document.getElementById('customer-name').value.trim();
             const phone = document.getElementById('customer-phone').value.trim();
             const errorText = document.getElementById('phone-error');
-            
             if (!validatePhone(phone)) {
                 if(errorText) errorText.classList.remove('hidden');
                 haptic('error');
                 return;
             }
-            
             if(errorText) errorText.classList.add('hidden');
             confirmOrder(name, phone);
         });
     }
 
-    // Закрытие модалок
     const successCloseBtn = document.getElementById('success-close-btn');
-    if (successCloseBtn) {
-        successCloseBtn.addEventListener('click', () => {
-            closeModal('success-modal');
-            switchPage('catalog');
-        });
-    }
+    if (successCloseBtn) successCloseBtn.addEventListener('click', () => { closeModal('success-modal'); switchPage('catalog'); });
 
     document.querySelectorAll('.modal-close').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const modal = btn.closest('.modal');
-            if(modal) modal.classList.remove('active');
-        });
+        btn.addEventListener('click', () => { const modal = btn.closest('.modal'); if(modal) modal.classList.remove('active'); });
     });
-    
     document.querySelectorAll('.modal').forEach(modal => {
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) modal.classList.remove('active');
-        });
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
     });
 
-    // Профиль и назад
-    document.querySelectorAll('.profile-btn').forEach(btn => {
-        btn.addEventListener('click', () => switchPage(btn.dataset.section));
-    });
-    document.querySelectorAll('.back-btn').forEach(btn => {
-        btn.addEventListener('click', () => switchPage(btn.dataset.back));
-    });
+    document.querySelectorAll('.profile-btn').forEach(btn => btn.addEventListener('click', () => switchPage(btn.dataset.section)));
+    document.querySelectorAll('.back-btn').forEach(btn => btn.addEventListener('click', () => switchPage(btn.dataset.back)));
     
-    // Кнопка добавления товара
     const addProductBtn = document.getElementById('add-product-btn');
-    if (addProductBtn) {
-        addProductBtn.addEventListener('click', openAddProductModal);
-    }
+    if (addProductBtn) addProductBtn.addEventListener('click', openAddProductModal);
     
-    console.log('🎉 Приложение успешно запущено!');
+    console.log('🎉 Приложение успешно запущено и готово к работе!');
 });

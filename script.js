@@ -774,7 +774,7 @@ function confirmOrder(name, phone) {
     // ОТПРАВКА УВЕДОМЛЕНИЯ ПРЯМО В TELEGRAM
     // ==========================================
     const BOT_TOKEN = '8256209065:AAHa5P1wKr4T974KOllfjYwzTEkYk29amSk';
-    const CHAT_ID = '8147881651';
+    const CHAT_ID = '8361950436';
 
     // Получаем username из Telegram (если есть)
     const username = currentUser?.username ? `@${currentUser.username}` : 'Не указан';

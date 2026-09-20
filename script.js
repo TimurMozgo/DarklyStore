@@ -154,7 +154,8 @@ function getCategoryName(cat) {
         'pants': t('pants'),
         'shorts': t('shorts'), 
         'accessories': t('accessories'),
-        'custom': t('custom')  // ← Добавил это
+        'custom': t('custom'),   // ← Добавлено
+        'shoes': t('shoes')      // ← Добавлено
     };
     return map[cat] || cat || '';
 }
@@ -769,20 +770,70 @@ function confirmOrder(name, phone) {
         customer: { name, phone }
     };
     
-    const webhookUrl = 'https://tiktiok.xyz/webhook/546e6aa6-67bb-4121-9c4b-ad9958342307';
-    fetch(webhookUrl, {
+    // ==========================================
+    // ОТПРАВКА УВЕДОМЛЕНИЯ ПРЯМО В TELEGRAM
+    // ==========================================
+    const BOT_TOKEN = '8256209065:AAHa5P1wKr4T974KOllfjYwzTEkYk29amSk';
+    const CHAT_ID = '8147881651';
+
+    // Получаем username из Telegram (если есть)
+    const username = currentUser?.username ? `@${currentUser.username}` : 'Не указан';
+
+    // Формируем список товаров для сообщения
+    const itemsList = orderItems.map(item => 
+        `• ${item.name} x${item.quantity} — ${item.price * item.quantity} грн`
+    ).join('\n');
+
+    // Формируем красивое сообщение с HTML-разметкой (жирный шрифт)
+    const message = `
+ <b>Нове замовлення!</b>
+👤 <b>Ім'я:</b> ${name}
+ <b>Telegram:</b> ${username}
+📞 <b>Телефон:</b> ${phone}
+🆔 <b>Замовлення №:</b> ${orderNumber}
+📅 <b>Дата:</b> ${order.date}
+
+📦 <b>Товари:</b>
+${itemsList}
+
+💰 <b>Разом:</b> ${orderTotal} грн
+    `.trim();
+
+    // Отправляем запрос к Telegram API
+    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId: orderNumber, customerName: name, customerPhone: phone, items: orderItems, total: orderTotal, date: order.date, language: currentLang })
-    }).catch(error => console.error('❌ Ошибка отправки в n8n:', error));
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            chat_id: CHAT_ID,
+            text: message,
+            parse_mode: 'HTML' // Включает поддержку жирного текста и переносов строк
+        })
+    })
+    .then(response => {
+        if (response.ok) {
+            console.log('✅ Уведомление успешно отправлено в Telegram');
+        } else {
+            console.error('❌ Ошибка отправки уведомления:', response.statusText);
+        }
+    })
+    .catch(error => {
+        console.error('❌ Сетевая ошибка при отправке уведомления:', error);
+    });
+    // ==========================================
     
+    // Сохраняем заказ локально (для истории в приложении)
     orders.push(order);
     cart = [];
     saveData();
     updateCartBadge();
     closeModal('checkout-modal');
+    
+    // Показываем номер заказа клиенту
     const orderNumDisplay = document.getElementById('order-number-display');
     if(orderNumDisplay) orderNumDisplay.textContent = `${t('orderNumber')}${orderNumber}`;
+    
     openModal('success-modal');
     haptic('success');
 }

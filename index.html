@@ -101,9 +101,15 @@
                             <rect x="20" y="30" width="60" height="50" rx="5" fill="none" stroke="currentColor" stroke-width="3"/>
                             <path d="M35 50 L50 65 L65 40" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
                             <circle cx="70" cy="25" r="8" fill="currentColor"/>
-                            <path d="M70 25 L70 15" stroke="currentColor" stroke-width="3"/>
                         </svg>
-                        <span data-i18n="custom">Речі під замовлення</span>
+                        <span data-i18n="custom">Вещи под заказ</span>
+                    </div>
+                    <div class="category-card" data-category="shoes">
+                        <svg class="category-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M15 60 Q15 40 35 40 L75 40 Q90 40 90 55 L90 70 Q90 80 80 80 L25 80 Q15 80 15 70 Z" fill="none" stroke="currentColor" stroke-width="3"/>
+                            <path d="M35 40 L35 30 Q35 25 40 25 L60 25 Q65 25 65 30 L65 40" fill="none" stroke="currentColor" stroke-width="3"/>
+                        </svg>
+                        <span data-i18n="shoes">Обувь</span>
                     </div>
                 </div>
             </div>
@@ -122,6 +128,8 @@
                     <button class="filter-btn" data-filter="pants" data-i18n="pants">Штаны</button>
                     <button class="filter-btn" data-filter="shorts" data-i18n="shorts">Шорты</button>
                     <button class="filter-btn" data-filter="accessories" data-i18n="accessories">Аксессуары</button>
+                    <button class="filter-btn" data-filter="custom" data-i18n="custom">Вещи под заказ</button>
+                    <button class="filter-btn" data-filter="shoes" data-i18n="shoes">Обувь</button>
                 </div>
             </div>
             <div id="products-container" class="products-grid"></div>
@@ -294,7 +302,8 @@
                             <option value="pants" data-i18n="pants">Штаны</option>
                             <option value="shorts" data-i18n="shorts">Шорты</option>
                             <option value="accessories" data-i18n="accessories">Аксессуары</option>
-                            <button class="filter-btn" data-filter="custom" data-i18n="custom">Вещи под заказ</button>
+                            <option value="custom" data-i18n="custom">Вещи под заказ</option>
+                            <option value="shoes" data-i18n="shoes">Обувь</option>
                         </select>
                     </div>
                     <button type="submit" class="btn-primary" id="form-submit-btn" data-i18n="saveProduct">Сохранить</button>
